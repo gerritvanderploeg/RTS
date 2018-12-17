@@ -76,7 +76,7 @@ static void prvSetupHardware( void );
 	extern void main_blinky( void );
 #else
 	extern void blinky2( void );
-#endif /* #if mainCREATE_SIMPLE_BLINKY_DEMO_ONLY == 1
+#endif /* #if mainCREATE_SIMPLE_BLINKY_DEMO_ONLY == 1*/
 
 
 

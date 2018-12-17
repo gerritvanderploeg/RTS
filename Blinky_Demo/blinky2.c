@@ -62,6 +62,8 @@
  * the LED every 200 milliseconds.
  */
 
+#include <stdio.h>
+
 /* Kernel includes. */
 #include "FreeRTOS.h"
 #include "task.h"
@@ -112,6 +114,7 @@ static void timerTask(void *pvParameters);
 static QueueHandle_t xQueue = NULL;
 
 volatile bool usiButton1, critical;
+volatile bool led = 0;
 
 SemaphoreHandle_t semaKnop, semaTimer;
 
@@ -121,7 +124,16 @@ TimerHandle_t xTimer;
 
 void vTimerCallback( TimerHandle_t xTimer )
 {
-    GPIO_toggleOutputOnPin( GPIO_PORT_P4, GPIO_PIN6 );
+    if ( led )
+    {
+        GPIO_setOutputHighOnPin( GPIO_PORT_P4, GPIO_PIN6 );
+        led ^= 1;
+    }
+    else if ( !led )
+    {
+        GPIO_setOutputLowOnPin( GPIO_PORT_P4, GPIO_PIN6 );
+        led ^= 1;
+    }
 }
 
 
@@ -142,7 +154,7 @@ void blinky2( void )
                     NULL,                               /* The parameter passed to the task - not used in this case. */
                     1,                                  /* The priority assigned to the task. */
                     NULL );                             /* The task handle is not required, so NULL is passed. */
-        xTaskCreate( timerTask, "timerTask", configMINIMAL_STACK_SIZE, NULL, 2, NULL );
+        xTaskCreate( timerTask, "timerTask", 2048, NULL, 2, NULL );
 
 
 
@@ -207,7 +219,19 @@ static void timerTask(void *pvParamters)
 
     xTimerStart(xTimer, 0);
     for(;;)
-        vTaskDelay(100);
+    {
+        //taskENTER_CRITICAL();
+        if ( led )
+        {
+            printf("LED is HIGH \n");
+        }
+        else if ( !led )
+        {
+            printf("LED is LOW \n");
+        }
+        //taskEXIT_CRITICAL();
+        vTaskDelay(500);
+    }
 }
 
 

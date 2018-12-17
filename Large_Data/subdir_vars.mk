@@ -11,37 +11,31 @@ CMD_SRCS += \
 C_SRCS += \
 ../LEDs.c \
 ../knop.c \
-../main.c \
-../printf-stdarg.c 
+../main.c 
 
 C_DEPS += \
 ./LEDs.d \
 ./knop.d \
-./main.d \
-./printf-stdarg.d 
+./main.d 
 
 OBJS += \
 ./LEDs.obj \
 ./knop.obj \
-./main.obj \
-./printf-stdarg.obj 
+./main.obj 
 
 OBJS__QUOTED += \
 "LEDs.obj" \
 "knop.obj" \
-"main.obj" \
-"printf-stdarg.obj" 
+"main.obj" 
 
 C_DEPS__QUOTED += \
 "LEDs.d" \
 "knop.d" \
-"main.d" \
-"printf-stdarg.d" 
+"main.d" 
 
 C_SRCS__QUOTED += \
 "../LEDs.c" \
 "../knop.c" \
-"../main.c" \
-"../printf-stdarg.c" 
+"../main.c" 
 
 
