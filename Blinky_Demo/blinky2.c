@@ -67,6 +67,7 @@
 #include "task.h"
 #include "semphr.h"
 #include "queue.h"
+#include "timers.h"
 
 /* Standard demo includes. */
 #include "partest.h"
@@ -105,7 +106,6 @@ void blinky2( void );
 static void ledToggleTask(void *pvParameters);
 static void timerTask(void *pvParameters);
 
-
 /*-----------------------------------------------------------*/
 
 /* The queue used by both tasks. */
@@ -115,7 +115,15 @@ volatile bool usiButton1, critical;
 
 SemaphoreHandle_t semaKnop, semaTimer;
 
+TimerHandle_t xTimer;
+
 /*-----------------------------------------------------------*/
+
+void vTimerCallback( TimerHandle_t xTimer )
+{
+    GPIO_toggleOutputOnPin( GPIO_PORT_P4, GPIO_PIN6 );
+}
+
 
 void blinky2( void )
 {
@@ -127,11 +135,6 @@ void blinky2( void )
         semaKnop = xSemaphoreCreateBinary();
         semaTimer = xSemaphoreCreateBinary();
 
-        // configure timer
-        TB0CTL |= TBCLR;
-        TB0CTL = (TB0CTL | 0x0100 | ID__2 | TBIE); // ACLK/2, continuous mode, interrupt enabled and timer cleared.
-        //TB0CCTL0 |= CCIE; // interrupt enable
-        TB0CTL |= MC__CONTINUOUS;
 
         xTaskCreate( ledToggleTask,               /* The function that implements the task. */
                     "ledToggle",                               /* The text name assigned to the task - for debug only as it is not used by the kernel. */
@@ -183,15 +186,30 @@ static void ledToggleTask (void *pvParameters)
 
 static void timerTask(void *pvParamters)
 {
+    xTimer = xTimerCreate
+                       ( /* Just a text name, not used by the RTOS
+                         kernel. */
+                         "Timer",
+                         /* The timer period in ticks, must be
+                         greater than 0. */
+                         pdMS_TO_TICKS(1000),
+                         /* The timers will auto-reload themselves
+                         when they expire. */
+                         pdTRUE,
+                         /* The ID is used to store a count of the
+                         number of times the timer has expired, which
+                         is initialised to 0. */
+                         ( void * ) 0,
+                         /* Each timer calls the same callback when
+                         it expires. */
+                         vTimerCallback
+                       );
+
+    xTimerStart(xTimer, 0);
     for(;;)
-    {
-        if ( xSemaphoreTake(semaTimer, portMAX_DELAY) )
-        {
-            GPIO_toggleOutputOnPin( GPIO_PORT_P4, GPIO_PIN6 );
-        }
         vTaskDelay(100);
-    }
 }
+
 
 /*-----------------------------------------------------------*/
 
@@ -225,34 +243,5 @@ __interrupt void pushbutton_ISR (void)
             __no_operation();
             break;
        default:   _never_executed();
-    }
-}
-
-
-#pragma vector=TIMER0_B0_VECTOR
-__interrupt void timer1_ISR (void)
-{
-    //**************************************************************************
-    // 4. Timer ISR and vector
-    //**************************************************************************
-    switch( __even_in_range( TB0IV, TB0IV_TBIFG )) {
-     case TB0IV_NONE: break;                 // (0x00) None
-     case TB0IV_TBCCR1:                      // (0x02) CCR1 IFG
-         _no_operation();
-
-           break;
-     case TB0IV_TBCCR2:                      // (0x04) CCR2 IFG
-          _no_operation();
-           break;
-     case TB0IV_TBCCR3: break;                    // (0x06) Reserved
-     case TB0IV_TBCCR4: break;                    // (0x08) Reserved
-     case TB0IV_TBCCR5: break;                    // (0x0A) Reserved
-     case TB0IV_TBCCR6: break;                    // (0x0C) Reserved
-     case TB0IV_TBIFG:                       // (0x0E) TA1IFG - TAR overflow
-          // Toggle LED2 (Green) LED on/off
-         xSemaphoreGiveFromISR(semaTimer, NULL);
-
-          break;
-     default: _never_executed();
     }
 }
